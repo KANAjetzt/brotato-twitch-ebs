@@ -1,0 +1,21 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://mods-unpacked/Pasha-TwitchEBS/twitch_icon.png" type="Texture" id=1]
+
+[node name="TwitchButtons" type="HBoxContainer"]
+margin_right = 40.0
+margin_bottom = 40.0
+
+[node name="TwitchAuthButton" type="Button" parent="."]
+margin_right = 49.0
+margin_bottom = 44.0
+size_flags_horizontal = 0
+size_flags_vertical = 0
+size_flags_stretch_ratio = 0.0
+icon = ExtResource( 1 )
+icon_align = 1
+
+[node name="TwitchSendDataToggle" type="CheckButton" parent="."]
+margin_left = 53.0
+margin_right = 129.0
+margin_bottom = 44.0
