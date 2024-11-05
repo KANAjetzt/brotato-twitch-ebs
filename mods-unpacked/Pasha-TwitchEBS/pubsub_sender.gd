@@ -268,10 +268,10 @@ func sender() -> void:
 func resume() -> void:
 	clear_all()
 
-	for weapon_data in RunData.weapons:
+	for weapon_data in RunData.get_player_weapons(0):
 		weapon_added(weapon_data)
 
-	for item_data in RunData.items:
+	for item_data in RunData.get_player_items(0):
 		item_added(item_data)
 
 	stats_update()
@@ -305,7 +305,7 @@ func item_added(item_data: ItemData) -> void:
 	new_item_data.id = item_data.my_id
 	new_item_data.tier = item_data.tier
 	new_item_data.name = tr(item_data.name)
-	new_item_data.effects = item_data.get_effects_text()
+	new_item_data.effects = item_data.get_effects_text(0)
 	new_item_data.count = 1 if item_count == -1 else item_count + 1
 
 	# Add new `item_data` to the item queue if there is none with this ID or if the new count is higher.
@@ -344,8 +344,8 @@ func weapon_added(item_data: WeaponData) -> void:
 	weapon_data.tier = item_data.tier
 	weapon_data.name = tr(item_data.name)
 	weapon_data.set = tr(ItemService.get_weapon_sets_text(item_data.sets))
-	weapon_data.stats = item_data.get_weapon_stats_text()
-	weapon_data.effects = item_data.get_effects_text()
+	weapon_data.stats = item_data.get_weapon_stats_text(0)
+	weapon_data.effects = item_data.get_effects_text(0)
 
 	update_queue_weapon.push_back([weapon_data, SendAction.WEAPON_ADDED])
 
@@ -362,15 +362,15 @@ func stats_update() -> void:
 	var stats_data := {}
 
 	# Get all stats
-	for effect_key in RunData.init_stats():
-		var stat_value := Utils.get_stat(effect_key.to_lower()) as int
+	for effect_key in PlayerRunData.init_stats():
+		var stat_value := Utils.get_stat(effect_key.to_lower(), 0) as int
 
 		stats_data[effect_key] = stat_value
 
 	# Add the special snowflakes
-	stats_data.trees = RunData.effects.trees
-	stats_data.free_rerolls = RunData.effects.free_rerolls
-	stats_data.heal_when_pickup_gold = RunData.effects.heal_when_pickup_gold
+	stats_data.trees = Utils.get_stat("trees", 0)
+	stats_data.free_rerolls = Utils.get_stat("free_rerolls", 0)
+	stats_data.heal_when_pickup_gold = Utils.get_stat("heal_when_pickup_gold", 0)
 
 	update_stats = stats_data
 
@@ -504,9 +504,9 @@ func get_catch_up_batch_image() -> Array:
 
 # Can be optimized by saving a reference of the `ItemData` in the catch up store, so I don't have to hunt for it in `RunData`.
 func get_text_item(id: String) -> String:
-	for item_data in RunData.items:
+	for item_data in RunData.get_player_items(0):
 		if item_data.my_id == id:
-			return item_data.get_effects_text()
+			return item_data.get_effects_text(0)
 
 	return ""
 
@@ -514,9 +514,9 @@ func get_text_item(id: String) -> String:
 # Returns [stats text, effects text]
 # Can be optimized by saving a reference of the `WeaponData` in the catch up store, so I don't have to hunt for in `RunData`.
 func get_text_weapon(id: String) -> Array:
-	for weapon_data in RunData.weapons:
+	for weapon_data in RunData.get_player_weapons(0):
 		if weapon_data.my_id == id:
-			return [weapon_data.get_weapon_stats_text(), weapon_data.get_effects_text()]
+			return [weapon_data.get_weapon_stats_text(0), weapon_data.get_effects_text(0)]
 
 	return []
 
