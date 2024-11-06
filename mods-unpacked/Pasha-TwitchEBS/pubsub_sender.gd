@@ -307,6 +307,7 @@ func item_added(item_data: ItemData) -> void:
 	new_item_data.name = tr(item_data.name)
 	new_item_data.effects = item_data.get_effects_text(0)
 	new_item_data.count = 1 if item_count == -1 else item_count + 1
+	new_item_data.is_cursed = item_data.is_cursed
 
 	# Add new `item_data` to the item queue if there is none with this ID or if the new count is higher.
 	if not update_queue_item.has(item_data.my_id) or update_queue_item[item_data.my_id].count < new_item_data.count:
@@ -346,6 +347,7 @@ func weapon_added(item_data: WeaponData) -> void:
 	weapon_data.set = tr(ItemService.get_weapon_sets_text(item_data.sets))
 	weapon_data.stats = item_data.get_weapon_stats_text(0)
 	weapon_data.effects = item_data.get_effects_text(0)
+	weapon_data.is_cursed = item_data.is_cursed
 
 	update_queue_weapon.push_back([weapon_data, SendAction.WEAPON_ADDED])
 
