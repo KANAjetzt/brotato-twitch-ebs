@@ -370,9 +370,8 @@ func stats_update() -> void:
 		stats_data[effect_key] = stat_value
 
 	# Add the special snowflakes
-	stats_data.trees = Utils.get_stat("trees", 0)
-	stats_data.free_rerolls = Utils.get_stat("free_rerolls", 0)
-	stats_data.heal_when_pickup_gold = Utils.get_stat("heal_when_pickup_gold", 0)
+	stats_data.trees = RunData.players_data[0].effects.trees
+	stats_data.free_rerolls = RunData.players_data[0].effects.free_rerolls
 
 	update_stats = stats_data
 
