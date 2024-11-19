@@ -149,7 +149,7 @@ func get_catch_up_batch(batch_size_left := BATCH_SIZE, send_image := true, send_
 		batch.push_back(action)
 
 		# Restart catch_up_index if we are at the end of the array
-		catch_up_index = catch_up_index + 1 if not catch_up_index + 1 == catch_up_store.size() else 0
+		catch_up_index = catch_up_index % catch_up_store.size()
 
 	return batch
 
@@ -329,6 +329,9 @@ func weapon_removed(item_data: WeaponData) -> void:
 	weapon_data.id = item_data.my_id
 	weapon_data.tier = item_data.tier
 
+	catch_up_index -= 1
+	catch_up_store_weapons[weapon_data.id].pop_back()
+
 	update_queue_weapon.push_back([weapon_data, SendAction.WEAPON_REMOVED])
 
 
@@ -471,8 +474,9 @@ func handle_catch_up_store_weapons(send_data: Dictionary) -> void:
 		catch_up_store_weapons[send_data.data.id].push_back(send_data)
 
 	# If delete action - remove weapon with this id from catch up store
-	if send_data.action == get_send_action_text(SendAction.WEAPON_REMOVED):
-		catch_up_store_weapons[send_data.data.id].pop_back()
+	# Delete action is now handled directly in weapon_removed()
+#	if send_data.action == get_send_action_text(SendAction.WEAPON_REMOVED):
+#		catch_up_store_weapons[send_data.data.id].pop_back()
 
 
 func handle_catch_up_store_images(send_data: Dictionary) -> void:
