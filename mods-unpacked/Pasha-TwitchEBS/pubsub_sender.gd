@@ -274,7 +274,7 @@ func resume() -> void:
 	for item_data in RunData.get_player_items(0):
 		item_added(item_data)
 
-	stats_update()
+	stats_update(0)
 
 
 # Immediately sends a clear_all action to the front-end
@@ -357,7 +357,7 @@ func weapon_added(item_data: WeaponData) -> void:
 		upload_image(item_data.weapon_id, image)
 
 
-func stats_update() -> void:
+func stats_update(player_index: int = 0) -> void:
 	if not is_game_running():
 		return
 
@@ -365,13 +365,13 @@ func stats_update() -> void:
 
 	# Get all stats
 	for effect_key in PlayerRunData.init_stats():
-		var stat_value := Utils.get_stat(effect_key.to_lower(), 0) as int
+		var stat_value := Utils.get_stat(effect_key.to_lower(), player_index) as int
 
 		stats_data[effect_key] = stat_value
 
 	# Add the special snowflakes
-	stats_data.trees = RunData.players_data[0].effects.trees
-	stats_data.free_rerolls = RunData.players_data[0].effects.free_rerolls
+	stats_data.trees = RunData.players_data[player_index].effects.trees
+	stats_data.free_rerolls = RunData.players_data[player_index].effects.free_rerolls
 
 	update_stats = stats_data
 
