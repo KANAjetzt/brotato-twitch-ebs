@@ -103,7 +103,7 @@ func send(data: Array) -> void:
 	ModLoaderLog.info(JSON.print(data, "\t"), PASHA_TWITCHEBS_PUBSUBSENDER_LOG_NAME)
 
 
-func get_catch_up_batch(batch_size_left := BATCH_SIZE, send_image := true, send_stats := true) -> Array:
+func get_catch_up_batch(batch_size_left := BATCH_SIZE, send_image := true, send_stats := false) -> Array:
 	var batch := []
 	var catch_up_store := []
 
@@ -149,7 +149,7 @@ func get_catch_up_batch(batch_size_left := BATCH_SIZE, send_image := true, send_
 		batch.push_back(action)
 
 		# Restart catch_up_index if we are at the end of the array
-		catch_up_index = catch_up_index % catch_up_store.size()
+		catch_up_index = (catch_up_index + 1) % catch_up_store.size()
 
 	return batch
 
@@ -329,8 +329,13 @@ func weapon_removed(item_data: WeaponData) -> void:
 	weapon_data.id = item_data.my_id
 	weapon_data.tier = item_data.tier
 
-	catch_up_index -= 1
-	catch_up_store_weapons[weapon_data.id].pop_back()
+	catch_up_index = max(catch_up_index - 1, 0)
+
+	if catch_up_store_weapons.has(weapon_data.id):
+		catch_up_store_weapons[weapon_data.id].pop_back()
+
+		if catch_up_store_weapons[weapon_data.id].size() == 0:
+			catch_up_store_weapons.erase(weapon_data.id)
 
 	update_queue_weapon.push_back([weapon_data, SendAction.WEAPON_REMOVED])
 
