@@ -15,6 +15,11 @@ func add_item(item:ItemData, player_index:int) -> void:
 	Pasha_pubsub_sender.item_added(item)
 
 
+func remove_item(item:ItemData, player_index:int, by_id:bool = false) -> void:
+	.remove_item(item, player_index, by_id)
+	Pasha_pubsub_sender.item_removed(item)
+
+
 func add_weapon(weapon:WeaponData, player_index:int, is_selection:bool = false) -> WeaponData:
 	var new_weapon := .add_weapon(weapon, player_index, is_selection)
 

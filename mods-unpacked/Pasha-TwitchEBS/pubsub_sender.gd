@@ -6,7 +6,7 @@ const PASHA_TWITCHEBS_PUBSUBSENDER_LOG_NAME = "Pasha-TwitchEBS:PubsubSender"
 const SEND_TIME = 3
 const BATCH_SIZE = 5
 
-enum SendAction { CLEAR_ALL, STATS_UPDATE, WEAPON_ADDED, WEAPON_REMOVED, ITEM_ADDED, IMAGE_UPLOAD }
+enum SendAction { CLEAR_ALL, STATS_UPDATE, WEAPON_ADDED, WEAPON_REMOVED, ITEM_ADDED, IMAGE_UPLOAD, ITEM_REMOVED }
 
 var is_started := false
 var is_collect_data_enabled := false
@@ -17,6 +17,7 @@ var send_action_strings := {
 	3: "weapon_removed",
 	4: "item_added",
 	5: "image_upload",
+	6: "item_removed"
 }
 
 var send_timer: Timer
@@ -27,7 +28,7 @@ var update_queue_image := {}
 var update_queue_image_current_id := ""
 
 var update_queue_weapon := []
-var update_queue_item := {}
+var update_queue_item := []
 # Stats don't need a queue we always send the latest data
 var update_stats := {}
 
@@ -204,11 +205,14 @@ func sender() -> void:
 	for i in batch_size_left:
 		if update_queue_item.empty():
 			break
-		var update_item: Dictionary = update_queue_item.values()[0]
-		update_queue_item.erase(update_item.id)
+		var update_item: Array = update_queue_item.pop_front()
 		send_data.id = uuid_util.v4()
-		send_data.action = get_send_action_text(SendAction.ITEM_ADDED)
-		send_data.data = update_item
+		send_data.action = get_send_action_text(update_item[1])
+		if update_item[1] == SendAction.ITEM_ADDED:
+			update_item[0].count += 1
+		if update_item[0].is_cursed:
+			update_item[0].id = "%s-cursed-%s" % [update_item[0].id, send_data.id]
+		send_data.data = update_item[0]
 		batch.push_back(send_data.duplicate(true))
 		handle_catch_up_store_items(send_data.duplicate(true))
 		batch_size_left = batch_size_left - 1
@@ -300,23 +304,47 @@ func item_added(item_data: ItemData) -> void:
 
 	var new_item_data := {}
 	var new_item_icon_resource_path: String = item_data.icon.resource_path
-	var item_count := get_item_count(item_data.my_id)
 
 	new_item_data.id = item_data.my_id
 	new_item_data.tier = item_data.tier
 	new_item_data.name = tr(item_data.name)
 	new_item_data.effects = item_data.get_effects_text(0)
-	new_item_data.count = 1 if item_count == -1 else item_count + 1
+	new_item_data.count = 0
 	new_item_data.is_cursed = item_data.is_cursed
 
-	# Add new `item_data` to the item queue if there is none with this ID or if the new count is higher.
-	if not update_queue_item.has(item_data.my_id) or update_queue_item[item_data.my_id].count < new_item_data.count:
-		update_queue_item[item_data.my_id] = new_item_data
+	if not item_data.is_cursed:
+		if catch_up_store_items.has(item_data.my_id):
+			new_item_data.count = catch_up_store_items[item_data.my_id].data.count
+
+		for item in update_queue_item:
+			if item[0].id == item_data.my_id and not item[0].is_cursed:
+				new_item_data.count += 1
+
+	update_queue_item.push_back([new_item_data, SendAction.ITEM_ADDED])
 
 	if new_item_icon_resource_path.begins_with("res://mods-unpacked/"):
 		var image := Image.new()
 		image.load(new_item_icon_resource_path)
 		upload_image(item_data.my_id, image)
+
+
+func item_removed(item: ItemData) -> void:
+	if not is_game_running():
+		return
+
+	var item_data := {}
+
+	item_data.id = item.my_id
+
+	catch_up_index = max(catch_up_index - 1, 0)
+
+	if catch_up_store_items.has(item_data.id):
+		if catch_up_store_items[item_data.id].data.count == 1:
+			catch_up_store_items.erase(item_data.id)
+		else:
+			catch_up_store_items[item_data.id].data.count -= 1
+
+	update_queue_item.push_back([item_data, SendAction.ITEM_REMOVED])
 
 
 # Remove a weapon with this id and tier
@@ -459,16 +487,6 @@ func get_catch_up_store_array(get_images := true, get_stats := true, get_weapons
 
 func handle_catch_up_store_items(send_data: Dictionary) -> void:
 	catch_up_store_items[send_data.data.id] = send_data
-
-
-func get_item_count(item_id: String) -> int:
-	if update_queue_item.has(item_id):
-		return update_queue_item[item_id].count
-
-	if catch_up_store_items.has(item_id):
-		return catch_up_store_items[item_id].data.count
-
-	return -1
 
 
 func handle_catch_up_store_weapons(send_data: Dictionary) -> void:
