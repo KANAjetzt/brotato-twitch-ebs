@@ -210,8 +210,9 @@ func sender() -> void:
 		send_data.action = get_send_action_text(update_item[1])
 		if update_item[1] == SendAction.ITEM_ADDED:
 			update_item[0].count += 1
-		if update_item[0].is_cursed:
-			update_item[0].id = "%s-cursed-%s" % [update_item[0].id, send_data.id]
+			
+			if update_item[0].is_cursed:
+				update_item[0].id = "%s-cursed-%s" % [update_item[0].id, send_data.id]
 		send_data.data = update_item[0]
 		batch.push_back(send_data.duplicate(true))
 		handle_catch_up_store_items(send_data.duplicate(true))
