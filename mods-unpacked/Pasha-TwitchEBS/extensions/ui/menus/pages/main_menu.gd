@@ -68,3 +68,8 @@ func make_button_green() -> void:
 
 func _on_twitch_button_send_data_toggled(pressed: bool) -> void:
 	Pasha_pubsub_sender.is_collect_data_enabled = pressed
+
+
+func _on_StartButton_pressed() -> void:
+	._on_StartButton_pressed()
+	Pasha_pubsub_sender.clear_all()
