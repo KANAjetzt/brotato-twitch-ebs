@@ -210,7 +210,7 @@ func sender() -> void:
 		send_data.action = get_send_action_text(update_item[1])
 		if update_item[1] == SendAction.ITEM_ADDED:
 			update_item[0].count += 1
-			
+
 			if update_item[0].is_cursed:
 				update_item[0].id = "%s-cursed-%s" % [update_item[0].id, send_data.id]
 		send_data.data = update_item[0]
@@ -360,6 +360,21 @@ func weapon_removed(item_data: WeaponData) -> void:
 
 	catch_up_index = max(catch_up_index - 1, 0)
 
+	# If the item that was removed has not yet been sent, remove the weapon-added action and skip the remove action.
+	# This way only the data about the newly added tier +1 weapon will be send.
+	for i in update_queue_weapon.size():
+		var data: Dictionary = update_queue_weapon[i][0]
+		var send_action: int = update_queue_weapon[i][1]
+
+		if (
+			weapon_data.id == data.id and
+			weapon_data.tier == data.tier and
+			send_action == SendAction.WEAPON_ADDED
+		):
+			update_queue_weapon.remove(i)
+			return
+
+	# clear the catch_up_store
 	if catch_up_store_weapons.has(weapon_data.id):
 		catch_up_store_weapons[weapon_data.id].pop_back()
 
