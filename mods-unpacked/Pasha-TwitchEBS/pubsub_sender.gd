@@ -271,8 +271,6 @@ func sender() -> void:
 
 
 func resume() -> void:
-	clear_all()
-
 	for weapon_data in RunData.get_player_weapons(0):
 		weapon_added(weapon_data)
 
@@ -297,6 +295,8 @@ func clear_all() -> void:
 	catch_up_index_image_chunk = 0
 
 	send([{"action": get_send_action_text(SendAction.CLEAR_ALL), "data": {}}])
+
+	is_started = false
 
 
 func item_added(item_data: ItemData) -> void:

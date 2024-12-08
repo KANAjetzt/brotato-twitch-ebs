@@ -6,8 +6,8 @@ onready var Pasha_pubsub_sender = get_node("/root/ModLoader/Pasha-TwitchEBS/Pubs
 
 func reset(restart: bool = false) -> void:
 	.reset(restart)
-	if restart:
-		Pasha_pubsub_sender.resume()
+	if Pasha_pubsub_sender:
+		Pasha_pubsub_sender.clear_all()
 
 
 func add_item(item:ItemData, player_index:int) -> void:
