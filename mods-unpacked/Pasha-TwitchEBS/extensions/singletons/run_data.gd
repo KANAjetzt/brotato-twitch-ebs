@@ -31,3 +31,13 @@ func remove_weapon(weapon:WeaponData, player_index:int)->int:
 	var removed_weapon_tracked_value := .remove_weapon(weapon, player_index)
 	Pasha_pubsub_sender.weapon_removed(weapon)
 	return removed_weapon_tracked_value
+
+
+func on_wave_start() -> void:
+	.on_wave_start()
+	Pasha_pubsub_sender.wave_started()
+
+
+func on_wave_end() -> void:
+	.on_wave_end()
+	Pasha_pubsub_sender.wave_ended()

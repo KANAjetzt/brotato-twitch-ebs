@@ -17,6 +17,7 @@ func install_script_extensions() -> void:
 	ModLoaderMod.install_script_extension(extensions_dir_path.plus_file("ui/menus/pages/main_menu.gd"))
 	ModLoaderMod.install_script_extension(extensions_dir_path.plus_file("singletons/run_data.gd"))
 	ModLoaderMod.install_script_extension(extensions_dir_path.plus_file("ui/menus/shop/stats_container.gd"))
+	ModLoaderMod.install_script_extension(extensions_dir_path.plus_file("singletons/temp_stats.gd"))
 
 
 func _ready():

@@ -6,7 +6,17 @@ const PASHA_TWITCHEBS_PUBSUBSENDER_LOG_NAME = "Pasha-TwitchEBS:PubsubSender"
 const SEND_TIME = 3
 const BATCH_SIZE = 5
 
-enum SendAction { CLEAR_ALL, STATS_UPDATE, WEAPON_ADDED, WEAPON_REMOVED, ITEM_ADDED, IMAGE_UPLOAD, ITEM_REMOVED }
+enum SendAction {
+	CLEAR_ALL,
+	STATS_UPDATE,
+	WEAPON_ADDED,
+	WEAPON_REMOVED,
+	ITEM_ADDED,
+	IMAGE_UPLOAD,
+	ITEM_REMOVED,
+	WAVE_STARTED,
+	WAVE_ENDED,
+}
 
 var is_started := false
 var is_collect_data_enabled := false
@@ -17,7 +27,9 @@ var send_action_strings := {
 	3: "weapon_removed",
 	4: "item_added",
 	5: "image_upload",
-	6: "item_removed"
+	6: "item_removed",
+	7: "wave_started",
+	8: "wave_ended",
 }
 
 var send_timer: Timer
@@ -27,6 +39,7 @@ var is_http_request_processing := false
 var update_queue_image := {}
 var update_queue_image_current_id := ""
 
+var update_queue_prio := []
 var update_queue_weapon := []
 var update_queue_item := []
 # Stats don't need a queue we always send the latest data
@@ -53,7 +66,6 @@ func _ready() -> void:
 	add_http_request()
 
 	RunData.connect("stats_updated", self, "stats_update")
-	TempStats.connect("temp_stats_updated", self, "stats_update")
 
 
 func send_pubsub_request(data: String):
@@ -163,14 +175,23 @@ func sender() -> void:
 	var batch_size_left := BATCH_SIZE
 	var send_data := {
 		"id": "",
-		"action": 0,
+		"action": "",
 		"data": {},
 	}
 	var catch_up_stats := true
 
+	for prio_action in update_queue_prio:
+		send_data.id = ""
+		send_data.action = get_send_action_text(prio_action[1])
+		send_data.data = prio_action[0]
+		batch.push_back(send_data.duplicate(true))
+	
+	if not update_queue_prio.empty():
+		update_queue_prio.clear()
+
 	if is_catch_up:
 		ModLoaderLog.debug("Sending catch up batch", PASHA_TWITCHEBS_PUBSUBSENDER_LOG_NAME)
-		batch = get_catch_up_batch(BATCH_SIZE, is_catch_up_image)
+		batch.append_array(get_catch_up_batch(BATCH_SIZE, is_catch_up_image))
 		batch_size_left = 0
 
 		# Toggle image catch up
@@ -294,7 +315,14 @@ func clear_all() -> void:
 	catch_up_index_image = 0
 	catch_up_index_image_chunk = 0
 
-	send([{"action": get_send_action_text(SendAction.CLEAR_ALL), "data": {}}])
+	var is_unique := true
+
+	for prio_action in update_queue_prio:
+		if prio_action[1] == SendAction.CLEAR_ALL:
+			is_unique = false
+
+	if is_unique:
+		update_queue_prio.push_back([{}, SendAction.CLEAR_ALL])
 
 	is_started = false
 
@@ -407,6 +435,14 @@ func weapon_added(item_data: WeaponData) -> void:
 		var image := Image.new()
 		image.load(new_weapon_icon_resource_path)
 		upload_image(item_data.weapon_id, image)
+
+
+func wave_started() -> void:
+	update_queue_prio.push_back([{}, SendAction.WAVE_STARTED])
+
+
+func wave_ended() -> void:
+	update_queue_prio.push_back([{}, SendAction.WAVE_ENDED])
 
 
 func stats_update(player_index: int = 0) -> void:
